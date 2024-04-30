@@ -3,24 +3,24 @@ import { throttling } from '@octokit/plugin-throttling';
 import dotenv from 'dotenv';
 
 dotenv.config();
-Octokit.plugin(throttling);
+const MyOctokit = Octokit.plugin(throttling);
 
 // Initialize Octokit with authentication and configuration
-const octokit = new Octokit({
+const octokit = new MyOctokit({
   auth: process.env.GITHUB_TOKEN,
   throttle: {
-    onRateLimit: (retryAfter, options) => {
+    onRateLimit: (retryAfter, options, octokit, retryCount) => {
       console.log(
         `Request quota exhausted for request ${options.method} ${options.url}`
       );
-      if (options.request.retryCount < 2) {
+      if (retryCount < 1) {
         console.log(`Retrying after ${retryAfter} seconds!`);
         return true;
       }
     },
-    onAbuseLimit: (retryAfter, options) => {
+    onSecondaryRateLimit: (retryAfter, options, octokit) => {
       console.warn(
-        `Abuse detected for request ${options.method} ${options.url}`
+        `SecondaryRateLimit detected for request ${options.method} ${options.url}`
       );
     },
   },
